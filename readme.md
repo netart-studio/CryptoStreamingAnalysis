@@ -1,0 +1,1 @@
+Запускайтить через docker-compose up, и дашборд будет доступен на http://localhost:8050

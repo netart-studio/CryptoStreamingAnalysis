@@ -1,0 +1,26 @@
+FROM apache/spark:3.5.0
+
+USER root
+
+# Install curl and download ClickHouse JDBC driver
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    curl -L -o /opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar https://repo1.maven.org/maven2/com/clickhouse/clickhouse-jdbc/0.4.6/clickhouse-jdbc-0.4.6-all.jar
+
+# Set environment variables
+ENV SPARK_MODE=worker
+ENV SPARK_MASTER_URL=spark://spark-master:7077
+ENV SPARK_WORKER_MEMORY=2G
+ENV SPARK_WORKER_CORES=2
+ENV SPARK_WORKER_WEBUI_PORT=8081
+ENV SPARK_RPC_AUTHENTICATION_ENABLED=no
+ENV SPARK_RPC_ENCRYPTION_ENABLED=no
+ENV SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+ENV SPARK_SSL_ENABLED=no
+
+# Expose ports
+EXPOSE 8081
+
+# Start Spark Worker
+CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"] 

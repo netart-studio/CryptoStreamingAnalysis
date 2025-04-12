@@ -1,0 +1,26 @@
+FROM apache/spark:3.5.0
+
+WORKDIR /app
+
+# Install curl
+USER root
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Download ClickHouse JDBC driver
+RUN curl -L -o /opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar \
+    https://repo1.maven.org/maven2/com/clickhouse/clickhouse-jdbc/0.4.6/clickhouse-jdbc-0.4.6-all.jar
+
+# Copy application files
+COPY spark_streaming.py .
+COPY requirements-spark.txt .
+
+# Install Python dependencies
+RUN pip install --upgrade pip && \
+    pip install -r requirements-spark.txt
+
+CMD ["/opt/spark/bin/spark-submit", \
+    "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,com.clickhouse:clickhouse-jdbc:0.4.6", \
+    "--driver-class-path", "/opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar", \
+    "/app/spark_streaming.py"]

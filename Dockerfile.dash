@@ -1,0 +1,13 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Установка зависимостей в правильном порядке
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install numpy==1.24.3 && \
+    pip install -r requirements.txt
+
+COPY dash_app.py .
+
+CMD ["python", "dash_app.py"]
