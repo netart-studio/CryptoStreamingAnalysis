@@ -5,6 +5,11 @@ from clickhouse_driver import Client
 import pandas as pd
 import os
 import time
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ClickHouse Config
 CLICKHOUSE_HOST = os.getenv('CLICKHOUSE_HOST', 'clickhouse')
@@ -25,9 +30,9 @@ client = Client(
 # Test connection
 try:
     result = client.execute('SELECT 1')
-    print(f"ClickHouse connection test successful: {result}")
+    logger.info(f"ClickHouse connection test successful: {result}")
 except Exception as e:
-    print(f"ClickHouse connection error: {str(e)}")
+    logger.error(f"ClickHouse connection error: {str(e)}")
     raise
 
 # Dash App
@@ -90,8 +95,9 @@ def update_graph(n):
         return fig, html.Pre('\n'.join(debug_info))
         
     except Exception as e:
+        logger.error(f"Error updating graph: {str(e)}")
         debug_info.append(f"Error: {str(e)}")
         return go.Figure(), html.Pre('\n'.join(debug_info))
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', port=8050, debug=True)
+    app.run(host='0.0.0.0', port=8050, debug=True)

@@ -1,26 +1,29 @@
-FROM apache/spark:3.5.0
+FROM python:3.12-slim
 
-WORKDIR /app
-
-# Install curl
-USER root
+# Install Java and other dependencies
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y openjdk-17-jre-headless curl && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Download ClickHouse JDBC driver
-RUN curl -L -o /opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar \
-    https://repo1.maven.org/maven2/com/clickhouse/clickhouse-jdbc/0.4.6/clickhouse-jdbc-0.4.6-all.jar
+# Set Spark environment variables
+ENV SPARK_VERSION=3.5.0
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
-# Copy application files
+# Download and install Spark
+RUN curl -O https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
 COPY spark_streaming.py .
-COPY requirements-spark.txt .
 
-# Install Python dependencies
-RUN pip install --upgrade pip && \
-    pip install -r requirements-spark.txt
-
-CMD ["/opt/spark/bin/spark-submit", \
-    "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,com.clickhouse:clickhouse-jdbc:0.4.6", \
-    "--driver-class-path", "/opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar", \
-    "/app/spark_streaming.py"]
+# Run Spark application
+CMD ["spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0", "spark_streaming.py"]

@@ -1,8 +1,32 @@
-FROM apache/spark:3.5.0
+FROM python:3.12-slim
 
-USER root
+# Install Java and other dependencies
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y openjdk-17-jre-headless curl && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"] 
+# Set Spark environment variables
+ENV SPARK_VERSION=3.5.0
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Download and install Spark
+RUN curl -O https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY spark_streaming.py .
+
+# Expose ports
+EXPOSE 7077 8080
+
+# Start Spark master
+CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master", "-h", "0.0.0.0"] 

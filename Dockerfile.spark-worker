@@ -1,26 +1,32 @@
-FROM apache/spark:3.5.0
+FROM python:3.12-slim
 
-USER root
-
-# Install curl and download ClickHouse JDBC driver
+# Install Java and other dependencies
 RUN apt-get update && \
-    apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/* && \
-    curl -L -o /opt/spark/jars/clickhouse-jdbc-0.4.6-all.jar https://repo1.maven.org/maven2/com/clickhouse/clickhouse-jdbc/0.4.6/clickhouse-jdbc-0.4.6-all.jar
+    apt-get install -y openjdk-17-jre-headless curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set environment variables
-ENV SPARK_MODE=worker
-ENV SPARK_MASTER_URL=spark://spark-master:7077
-ENV SPARK_WORKER_MEMORY=2G
-ENV SPARK_WORKER_CORES=2
-ENV SPARK_WORKER_WEBUI_PORT=8081
-ENV SPARK_RPC_AUTHENTICATION_ENABLED=no
-ENV SPARK_RPC_ENCRYPTION_ENABLED=no
-ENV SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-ENV SPARK_SSL_ENABLED=no
+# Set Spark environment variables
+ENV SPARK_VERSION=3.5.0
+ENV SPARK_HOME=/opt/spark
+ENV PATH=$PATH:$SPARK_HOME/bin
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Download and install Spark
+RUN curl -O https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    tar xzf spark-${SPARK_VERSION}-bin-hadoop3.tgz && \
+    mv spark-${SPARK_VERSION}-bin-hadoop3 /opt/spark && \
+    rm spark-${SPARK_VERSION}-bin-hadoop3.tgz
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY spark_streaming.py .
 
 # Expose ports
 EXPOSE 8081
 
-# Start Spark Worker
+# Start Spark worker
 CMD ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"] 

@@ -1,8 +1,9 @@
-numpy==1.24.3
-python-binance==1.0.19
-confluent-kafka==2.2.0
 pyspark==3.5.0
-clickhouse-driver==0.2.7
+kafka-python==2.0.2
+clickhouse-driver==0.2.6
+pandas==2.2.0
+numpy==1.26.4
+python-binance==1.0.19
 dash==2.14.2
 plotly==5.18.0
-pandas==2.0.3
+confluent-kafka==2.3.0

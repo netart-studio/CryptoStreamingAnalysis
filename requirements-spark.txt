@@ -1,3 +1,5 @@
 # Этот файл оставлен пустым, так как все зависимости уже указаны в requirements.txt
-clickhouse-driver==0.2.7
-pandas==2.0.3
+pyspark>=3.5.0
+clickhouse-driver>=0.2.7
+pandas>=2.1.0
+numpy>=1.26.0
